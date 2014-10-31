@@ -1,0 +1,219 @@
+<html>
+	<head>
+		<title>heating-monitor</title>
+		
+		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+		<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+		<script type="text/javascript">
+		
+		//load visualization
+		google.load("visualization", "1", {packages:["corechart"]});
+		
+		//once it has loaded, call init_charts
+		google.setOnLoadCallback(init_charts);
+		
+		//options for chart1
+		var options1 = {
+		title: 'period',
+		legend: { position: 'bottom' },				
+		curveType: 'function',	
+		
+		vAxes: {0: {logScale: false, format: '##.#l', title: "consumption"},
+		1: {logScale: false, format: '##°C', title: "Temperatur"}},
+		series:{
+		   0:{targetAxisIndex:0},
+		   1:{targetAxisIndex:1}}
+		};
+		
+		//options for chart2
+		var options2 = {
+		title: 'day', 	
+		legend: { position: 'bottom' },
+		curveType: 'function',
+		
+		vAxes: {0: {logScale: false, format: '##.#l', title: "consumption"},
+		1: {logScale: false, format: '##°C', title: "Temperatur"}},
+		seriesType: "bars",
+		series:{
+		   0:{targetAxisIndex:0, color: 'D4D4E3'},
+		   1:{targetAxisIndex:1,type: "line", color: '#e7711b',lineWidth: 4}}
+		};
+		
+		
+		//global variables
+		var chart_overview;
+		var chart_detail;
+		var data1;
+		var data2;
+		
+		// TIME
+		var today=new Date();
+		var	today_minus_2_month=new Date();		
+		today_minus_2_month.setMonth( today_minus_2_month.getMonth( ) - 2 );
+		
+		// reformat date
+		Date.prototype.toDateInputValue = (function() {
+			var local = new Date(this);
+			local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+			return local.toJSON().slice(0,10);
+		});
+		
+		// get the Weekday
+		Date.prototype.Weekday = (function() {
+			var day;
+			switch(this.getDay()){
+			case 0:
+				day= "Sunday";
+				break;
+			case 1:
+				day= "Monday";
+				break;
+			case 2:
+				day= "Tuesday";
+				break;
+			case 3:
+				day= "Wednesday";
+				break;
+			case 4:
+				day= "Thursday";
+				break;
+			case 5:
+				day= "Friday";
+				break;
+			case 6:
+				day= "Saturday";
+				break;        
+			
+			default:
+				day="Error";                
+			}
+			
+			return day;
+		});
+		
+		//called if we change the period we want to display
+		function new_time_range(){				
+			draw_overview_chart($('#start_date').val(), $('#end_date').val());				
+		};
+		
+		
+		//called if a specific date had been selected on chart 1
+		function selectHandler() {
+			var selection = chart_overview.getSelection();
+			for (var i = 0; i < selection.length; i++) {
+				var item = selection[i];
+				if (item.row != null) {
+				  draw_detail_chart(data1.getValue(item.row, 0));
+				} 
+			}			
+		}
+		
+		
+		// The content of this function is called once the page has loaded
+		$(document).ready( function() {
+		
+			//initial state of period selectors
+			//End Date
+			$('#end_date').val(today.toDateInputValue());
+			
+			//Start Date
+			$('#start_date').val(today_minus_2_month.toDateInputValue());
+			
+			//change trigger
+			$('#end_date,#start_date').change(function() {new_time_range();	});
+			
+		});		
+		
+		//initialize the charts
+		function init_charts() {
+			chart_overview = new google.visualization.LineChart(document.getElementById('overview_chart'));			
+			chart_detail = new google.visualization.ComboChart(document.getElementById('detail_chart'));
+			
+			// Add our selection handler.
+			google.visualization.events.addListener(chart_overview, 'select', selectHandler);
+			
+			//init with first default data
+			//overview
+			draw_overview_chart(today_minus_2_month.toDateInputValue(), today.toDateInputValue());	
+			  
+			//detail
+			draw_detail_chart(today.toDateInputValue());
+		}
+		
+		//draw the overview chart
+		function draw_overview_chart(from, to) {
+			var from_date = new Date(from);
+			var to_date = new Date(to);
+		
+			//prepare title for chart
+			options1.title="Period from " + from_date.getDate() + "." + (parseInt(from_date.getMonth())+1) +"."+from_date.getFullYear() + " to " + to_date.getDate() + "." +(parseInt(to_date.getMonth())+1)+"."+to_date.getFullYear();
+			
+			//load data for chart
+			$.ajax({
+			  url: "ajax.php?mode=range&from="+from+"&to=" + to,
+			  cache: false
+			})
+				//once we have the data, we can process it
+			  .done(function( html ) {	  
+				data1 = google.visualization.arrayToDataTable(JSON.parse(html));				
+						
+				// sum up the consumed oil/water/whatever
+				var sum=0;
+				for (i = 0; i < data1.getNumberOfRows(); i++)
+					sum+=parseFloat(data1.getValue(i, 1));
+				
+				options1.title+=". Consumption ca " + sum.toFixed(0) + " liter"; 
+					
+				chart_overview.draw(data1, options1);		
+				
+			});
+		}
+		
+		//draw the detail chart
+		function draw_detail_chart(detail_date) {
+			var detail_date_date = new Date(detail_date);
+			
+			//prepare title 
+			options2.title="Details for " + detail_date_date.Weekday() + " " + detail_date_date.getDate() + "." + (parseInt(detail_date_date.getMonth())+1)+"."+detail_date_date.getFullYear();
+			
+			//get data
+			$.ajax({
+			  url: "ajax.php?mode=single&at=" + detail_date,			  
+			  cache: false
+			})
+			.done(function( html ) {	
+				//process data
+				var json_in=JSON.parse(html);
+				
+				//check if we got back some data
+				if(json_in.length>1)
+				{
+					//show the chart
+					$( '#detail_chart' ).show();
+					
+					//get the data
+					data2 = google.visualization.arrayToDataTable(json_in);
+
+					//and draw it
+					chart_detail.draw(data2, options2);						
+				}				
+				//we have no data so hide the chart 
+				else		
+					$( '#detail_chart' ).hide();			
+
+			  });	
+		}
+		
+		</script>
+	</head>
+	<body>
+		<br>From:<br>
+		<input id="start_date" type="date"><br>
+		To:<br>
+		<input id="end_date" type="date">		
+
+		
+		<div id="overview_chart" style="position: relative;  width: 900px; height: 500px; margin:0 auto;"></div>		
+		<div id="detail_chart" style="position: relative;  width: 900px; height: 500px; margin:0 auto;">?</div>
+	</body>
+</html>
