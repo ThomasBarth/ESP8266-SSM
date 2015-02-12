@@ -18,11 +18,16 @@
 		legend: { position: 'bottom' },				
 		curveType: 'function',	
 		
-		vAxes: {0: {logScale: false, format: '##.#l', title: "consumption"},
-		1: {logScale: false, format: '##°C', title: "Temperatur"}},
+		vAxes: {
+			0: {logScale: false, format: '##.#l', title: "consumption"},
+			1: {logScale: false, format: '##°C', title: "Temperatur"},
+			2: {logScale: false, format: '##m/s', title: "Wind",textPosition: 'none'}
+			},
 		series:{
 		   0:{targetAxisIndex:0},
-		   1:{targetAxisIndex:1}}
+		   1:{targetAxisIndex:1},
+		   2:{targetAxisIndex:2, color: '#58FF42'}
+		   }
 		};
 		
 		//options for chart2
@@ -31,12 +36,17 @@
 		legend: { position: 'bottom' },
 		curveType: 'function',
 		
-		vAxes: {0: {logScale: false, format: '##.#l', title: "consumption"},
-		1: {logScale: false, format: '##°C', title: "Temperatur"}},
+		vAxes: {
+			0: {logScale: false, format: '##.#l', title: "consumption"},
+			1: {logScale: false, format: '##°C', title: "Temperatur"},
+			2: {logScale: false, format: '##m/s', title: "Wind",textPosition: 'none'}
+			},
 		seriesType: "bars",
 		series:{
 		   0:{targetAxisIndex:0, color: 'D4D4E3'},
-		   1:{targetAxisIndex:1,type: "line", color: '#e7711b',lineWidth: 4}}
+		   1:{targetAxisIndex:1,type: "line", color: '#e7711b',lineWidth: 4},
+		   2:{targetAxisIndex:2,type: "line", color: '#58FF42',lineWidth: 2}
+		   }
 		};
 		
 		
@@ -163,7 +173,26 @@
 					sum+=parseFloat(data1.getValue(i, 1));
 				
 				options1.title+=". Consumption ca " + sum.toFixed(0) + " liter"; 
-					
+				
+				//Formating for the toolboxes				
+				var consumption_format = new google.visualization.NumberFormat({
+					fractionDigits: 0,
+					suffix: 'l'
+				});
+				consumption_format.format(data1, 1); 
+
+				var temp_format = new google.visualization.NumberFormat({
+					fractionDigits: 0,
+					suffix: '°C'
+				});
+				temp_format.format(data1, 2); 
+				
+				var wind_format = new google.visualization.NumberFormat({
+					fractionDigits: 1,
+					suffix: 'm/s'
+				});
+				wind_format.format(data1, 3); 
+				
 				chart_overview.draw(data1, options1);		
 				
 			});
@@ -194,6 +223,25 @@
 					//get the data
 					data2 = google.visualization.arrayToDataTable(json_in);
 
+					//Format the toolboxes
+					var consumption_format = new google.visualization.NumberFormat({
+						fractionDigits: 2,
+						suffix: 'l'
+					});
+					consumption_format.format(data2, 1); 
+
+					var temp_format = new google.visualization.NumberFormat({
+						fractionDigits: 1,
+						suffix: '°C'
+					});
+					temp_format.format(data2, 2); 
+					
+					var wind_format = new google.visualization.NumberFormat({
+						fractionDigits: 2,
+						suffix: 'm/s'
+					});
+					wind_format.format(data2, 3); 
+					
 					//and draw it
 					chart_detail.draw(data2, options2);						
 				}				

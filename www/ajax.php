@@ -17,7 +17,7 @@
 		if($mode=='range')
 			//check if we have all parameters
 			if($_GET["from"]&&$_GET["to"])
-				$query = "SELECT DATE(moment) as output_datetime, SUM(`duration`) output_duration, AVG(outside_temp) output_temp FROM heating WHERE DATE(moment) BETWEEN '".escape($_GET["from"])."' AND '".escape($_GET["to"])."'  GROUP BY  DATE(moment)";
+				$query = "SELECT DATE(moment) as output_datetime, SUM(`duration`) output_duration, AVG(outside_temp) output_temp, AVG(wind) output_wind FROM heating WHERE DATE(moment) BETWEEN '".escape($_GET["from"])."' AND '".escape($_GET["to"])."'  GROUP BY  DATE(moment)";
 			else
 			{
 				echo "missing parameters for mode \"range\"";
@@ -27,7 +27,7 @@
 		//query if we want to get a single day
 		if($mode=='single')
 			if($_GET["at"])
-				$query = "SELECT TIME(moment) as output_datetime, `duration` as output_duration, `outside_temp` as output_temp FROM heating WHERE DATE(moment) = '" . escape($_GET["at"]) ."' ORDER BY `moment`";
+				$query = "SELECT TIME(moment) as output_datetime, `duration` as output_duration, `outside_temp` as output_temp, `wind` as output_wind FROM heating WHERE DATE(moment) = '" . escape($_GET["at"]) ."' ORDER BY `moment`";
 			else
 			{
 				echo "missing parameters for mode \"single\"";
@@ -44,11 +44,11 @@
 		mysqli_close($con);
 		
 		//print "header"
-		echo "[	[\"moment\", \"consumption\",\"outside_temp\"]";
+		echo "[	[\"moment\", \"consumption\",\"outside_temp\",\"wind\"]";
 		 
 		//print data
 		while ($row = mysqli_fetch_array($result))			
-			echo ",[\"" . $row['output_datetime'] . "\", " . $row['output_duration']*0.001 . ", " . $row['output_temp'] . "]";
+			echo ",[\"" . $row['output_datetime'] . "\", " . $row['output_duration']*0.001 . ", " . $row['output_temp'] . ", " . $row['output_wind'] . "]";
 		
 		//print end
 		echo "]";

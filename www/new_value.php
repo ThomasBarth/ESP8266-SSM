@@ -22,7 +22,7 @@
 			  echo "Failed to connect to MySQL: " . mysqli_connect_error();	
 
 			//execute SQL query
-			mysqli_query($con,"INSERT INTO heating (moment, duration, outside_temp)VALUES ('".date("Y-m-d H:i:s")."', '". $duration ."','" . $weather->main->temp . "')");
+			mysqli_query($con,"INSERT INTO heating (moment, duration, outside_temp, wind)VALUES ('".date("Y-m-d H:i:s")."', '". $duration ."','" . $weather->main->temp . "','" . $weather->wind->speed . "');");
 
 			//close database connection
 			mysqli_close($con);
