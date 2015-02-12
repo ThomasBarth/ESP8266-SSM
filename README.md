@@ -15,7 +15,8 @@ create SQL database table
 CREATE TABLE `heating` (
     `moment`          DATETIME NOT NULL ,
     `duration`        DOUBLE   NOT NULL ,
-    `outside_temp`    DOUBLE   NOT NULL
+    `outside_temp`    DOUBLE   NOT NULL ,
+    `wind`            DOUBLE   NOT NULL
 ) ;
 
 3.
