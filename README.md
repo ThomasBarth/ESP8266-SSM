@@ -6,7 +6,7 @@ measures how long a pin is pulled down and send this information to a PHP script
 There is also a frontend based on visualization.
 
 1.
-flash bins to the correponding adresses
+flash bins to the corresponding adresses
 start the chip, you might want to test AT+GMR, it should tell you that it is the DataLogger.
 Also you now have a AT+HELP command
 
